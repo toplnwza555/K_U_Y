@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'list.dart';
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
@@ -25,11 +27,11 @@ class _LoginPageState extends State<LoginPage> {
       );
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
+        MaterialPageRoute(builder: (_) => const ListScreen()),
       );
     } on FirebaseAuthException catch (e) {
       setState(() {
-        _error = 'เข้าสู่ระบบไม่สำเร็จ';
+        _error = e.message ?? 'เกิดข้อผิดพลาด';
       });
     } finally {
       setState(() {
@@ -44,11 +46,7 @@ class _LoginPageState extends State<LoginPage> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // พื้นหลัง
-          Image.asset(
-            'assets/fantasy_bg.png',
-            fit: BoxFit.cover,
-          ),
+          Image.asset('assets/fantasy_bg.png', fit: BoxFit.cover),
           Center(
             child: SingleChildScrollView(
               child: Container(
@@ -145,30 +143,17 @@ class _LoginPageState extends State<LoginPage> {
                           backgroundColor: const Color(0xFF2196F3),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
-                            side: const BorderSide(
-                              color: Color(0xFF90CAF9), // ขอบฟ้าอ่อน
-                              width: 2,
-                            ),
                           ),
-                          elevation: 0,
-                          textStyle: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
+                          textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
-                        child: const Text(
-                          'เข้าสู่ระบบ',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
+                        child: const Text('เข้าสู่ระบบ', style: TextStyle(color: Colors.white)),
                       ),
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 14),
-                      const Text(
+                      Text(
                         'เข้าสู่ระบบไม่สำเร็จ',
-                        style: TextStyle(color: Colors.redAccent, fontSize: 16),
+                        style: const TextStyle(color: Colors.redAccent, fontSize: 14),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -178,40 +163,6 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// หน้า HomePage เหมือนเดิม
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Firebase Connected'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => LoginPage()),
-              );
-            },
-          )
-        ],
-      ),
-      body: Center(
-        child: Text(
-          'ยินดีต้อนรับ\n${user?.email ?? "-"}',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 20),
-        ),
       ),
     );
   }

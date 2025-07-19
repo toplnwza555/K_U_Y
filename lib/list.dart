@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:excel/excel.dart' as excel;
+import 'login.dart';
 
 class ListScreen extends StatefulWidget {
   const ListScreen({super.key});
@@ -43,7 +45,6 @@ class _ListScreenState extends State<ListScreen> {
     });
   }
 
-  // ------- Helper for dropdowns -------
   String extractLevel(String room) {
     if (room.contains('อนุบาล')) return 'อนุบาล';
     if (room.contains('ประถม')) return 'ประถม';
@@ -67,11 +68,9 @@ class _ListScreenState extends State<ListScreen> {
     final m = reg.firstMatch(room);
     return m?.group(1) ?? room;
   }
-  // ------- End Helper -------
 
   @override
   Widget build(BuildContext context) {
-    // ตัวเลือก dropdown
     final levelOptions = ['ระดับชั้น', ...{...students.map((s) => extractLevel(s['room']!))}..remove('อื่นๆ')];
     final yearOptions = ['ชั้นปี', ...{
       ...students.where((s) => level == 'ระดับชั้น' || extractLevel(s['room']!) == level).map((s) => extractYear(s['room']!))
@@ -83,7 +82,6 @@ class _ListScreenState extends State<ListScreen> {
       ).map((s) => extractRoom(s['room']!))
     }];
 
-    // กรองนักเรียน
     final filtered = students.where((s) {
       bool matchLevel = (level == 'ระดับชั้น') || (extractLevel(s['room']!) == level);
       bool matchYear = (year == 'ชั้นปี') || (extractYear(s['room']!) == year);
@@ -98,6 +96,20 @@ class _ListScreenState extends State<ListScreen> {
         backgroundColor: const Color(0xFF263238),
         title: const Text('รายการนักเรียน', style: TextStyle(color: Colors.white)),
         automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            tooltip: "ออกจากระบบ",
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              if (!context.mounted) return;
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+              );
+            },
+          )
+        ],
       ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
@@ -109,7 +121,6 @@ class _ListScreenState extends State<ListScreen> {
               children: [
                 Row(
                   children: [
-                    // dropdown ระดับชั้น
                     Expanded(child: _DropdownMenuBox(
                         value: level, options: levelOptions,
                         onChanged: (v) {
@@ -120,7 +131,6 @@ class _ListScreenState extends State<ListScreen> {
                           });
                         })),
                     const SizedBox(width: 8),
-                    // dropdown ชั้นปี
                     Expanded(child: _DropdownMenuBox(
                         value: year, options: yearOptions,
                         onChanged: (v) {
@@ -130,7 +140,6 @@ class _ListScreenState extends State<ListScreen> {
                           });
                         })),
                     const SizedBox(width: 8),
-                    // dropdown ห้อง
                     Expanded(child: _DropdownMenuBox(
                         value: room, options: roomOptions,
                         onChanged: (v) {
@@ -139,7 +148,6 @@ class _ListScreenState extends State<ListScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                // search box
                 TextField(
                   decoration: InputDecoration(
                     hintText: 'ค้นหา...',
@@ -169,7 +177,6 @@ class _ListScreenState extends State<ListScreen> {
                     ),
                     title: Text(s['name']!, style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text('รหัส: ${s['id']}  |  ห้อง: ${s['room']}'),
-                    // ไม่มี trailing กล้อง!
                   ),
                 );
               },
@@ -189,9 +196,7 @@ class _ListScreenState extends State<ListScreen> {
                     ),
                     elevation: 2,
                   ),
-                  onPressed: () {
-                    // คุณจะใส่ฟังก์ชัน download ตรงนี้ทีหลังได้
-                  },
+                  onPressed: () {},
                   icon: Icon(Icons.arrow_downward, color: Colors.white, size: 28),
                   label: Text(
                     'DOWNLOAD',
