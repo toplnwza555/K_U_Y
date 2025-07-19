@@ -14,6 +14,8 @@ dependencies:
   firebase_core: ^3.15.1
   firebase_auth: ^5.6.2
   google_fonts: ^6.1.0
+  excel: ^2.0.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -24,3 +26,4 @@ flutter:
   assets:
     - assets/fantasy_bg.png
     - assets/mylogo.png
+    - assets/students_by_class_fixed.xlsx

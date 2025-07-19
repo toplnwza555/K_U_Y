@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'login.dart';  // import ไฟล์ login.dart
+// import 'login.dart';   // ปิดชั่วคราว
+import 'list.dart';      // เปิดใช้ ListScreen
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Login Demo',
-      home: LoginPage(),
+      home: ListScreen(),  // <<< ตรงนี้!
     );
   }
 }
