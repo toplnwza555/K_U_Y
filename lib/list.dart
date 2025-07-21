@@ -177,6 +177,19 @@ class _ListScreenState extends State<ListScreen> {
                     ),
                     title: Text(s['name']!, style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text('รหัส: ${s['id']}  |  ห้อง: ${s['room']}'),
+                    trailing: IconButton(
+                      icon: Image.asset(
+                        'assets/galleryicon.png',
+                        width: 28,
+                        height: 28,
+                      ),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('ฟีเจอร์เลือกไฟล์ยังไม่เปิดใช้งาน')),
+                        );
+                      },
+                      tooltip: "เลือกรูปจากเครื่อง",
+                    ),
                   ),
                 );
               },
