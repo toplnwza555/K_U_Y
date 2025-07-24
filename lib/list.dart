@@ -1,8 +1,11 @@
+// list.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:excel/excel.dart' as excel;
 import 'login.dart';
+import 'widgets/dropdown_box.dart';
+import 'widgets/student_card.dart';
 
 class ListScreen extends StatefulWidget {
   const ListScreen({super.key});
@@ -51,18 +54,23 @@ class _ListScreenState extends State<ListScreen> {
     if (room.contains('มัธยม')) return 'มัธยม';
     return 'อื่นๆ';
   }
+
   String extractYear(String room) {
     final reg = RegExp(r'(อนุบาล|ประถม|มัธยม)\s?(\d+)');
     final m = reg.firstMatch(room);
     if (m != null) {
       switch (m.group(1)) {
-        case 'อนุบาล': return 'อนุบาล${m.group(2)}';
-        case 'ประถม': return 'ป.${m.group(2)}';
-        case 'มัธยม': return 'ม.${m.group(2)}';
+        case 'อนุบาล':
+          return 'อนุบาล${m.group(2)}';
+        case 'ประถม':
+          return 'ป.${m.group(2)}';
+        case 'มัธยม':
+          return 'ม.${m.group(2)}';
       }
     }
     return 'อื่นๆ';
   }
+
   String extractRoom(String room) {
     final reg = RegExp(r'(\d+/\d+)');
     final m = reg.firstMatch(room);
@@ -92,24 +100,63 @@ class _ListScreenState extends State<ListScreen> {
     }).toList();
 
     return Scaffold(
+      drawer: Drawer(
+        backgroundColor: Colors.white,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(color: Color(0xFF29A8F3)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const CircleAvatar(
+                    radius: 32,
+                    backgroundColor: Colors.white,
+                    backgroundImage: AssetImage('assets/mylogo.png'), // ใช้โลโก้ของคุณ
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'เมนูหลัก',
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home, color: Color(0xFF29A8F3)),
+              title: const Text('หน้าหลัก'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings, color: Color(0xFF29A8F3)),
+              title: const Text('ตั้งค่า'),
+              onTap: () {},
+            ),
+            ListTile(
+              leading: const Icon(Icons.info, color: Color(0xFF29A8F3)),
+              title: const Text('เกี่ยวกับแอป'),
+              onTap: () {},
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Color(0xFF29A8F3)),
+              title: const Text('ออกจากระบบ'),
+              onTap: () async {
+                await FirebaseAuth.instance.signOut();
+                if (!context.mounted) return;
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
       appBar: AppBar(
         backgroundColor: const Color(0xFF263238),
         title: const Text('รายการนักเรียน', style: TextStyle(color: Colors.white)),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            tooltip: "ออกจากระบบ",
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              if (!context.mounted) return;
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginPage()),
-              );
-            },
-          )
-        ],
       ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
@@ -121,37 +168,18 @@ class _ListScreenState extends State<ListScreen> {
               children: [
                 Row(
                   children: [
-                    Expanded(child: _DropdownMenuBox(
-                        value: level, options: levelOptions,
-                        onChanged: (v) {
-                          setState(() {
-                            level = v;
-                            year = 'ชั้นปี';
-                            room = 'ห้อง';
-                          });
-                        })),
+                    Expanded(child: DropdownMenuBox(value: level, options: levelOptions, onChanged: (v) => setState(() { level = v; year = 'ชั้นปี'; room = 'ห้อง'; }))),
                     const SizedBox(width: 8),
-                    Expanded(child: _DropdownMenuBox(
-                        value: year, options: yearOptions,
-                        onChanged: (v) {
-                          setState(() {
-                            year = v;
-                            room = 'ห้อง';
-                          });
-                        })),
+                    Expanded(child: DropdownMenuBox(value: year, options: yearOptions, onChanged: (v) => setState(() { year = v; room = 'ห้อง'; }))),
                     const SizedBox(width: 8),
-                    Expanded(child: _DropdownMenuBox(
-                        value: room, options: roomOptions,
-                        onChanged: (v) {
-                          setState(() => room = v);
-                        })),
+                    Expanded(child: DropdownMenuBox(value: room, options: roomOptions, onChanged: (v) => setState(() => room = v))),
                   ],
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   decoration: InputDecoration(
                     hintText: 'ค้นหา...',
-                    prefixIcon: Icon(Icons.search),
+                    prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     filled: true,
                     fillColor: Colors.grey.shade200,
@@ -166,30 +194,18 @@ class _ListScreenState extends State<ListScreen> {
               itemCount: filtered.length,
               itemBuilder: (context, index) {
                 final s = filtered[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  color: const Color(0xFFE0F7FA),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: const Color(0xFFB2EBF2),
-                      child: Text('${index + 1}', style: const TextStyle(color: Colors.black)),
-                    ),
-                    title: Text(s['name']!, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text('รหัส: ${s['id']}  |  ห้อง: ${s['room']}'),
-                    trailing: IconButton(
-                      icon: Image.asset(
-                        'assets/galleryicon.png',
-                        width: 28,
-                        height: 28,
-                      ),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('ฟีเจอร์เลือกไฟล์ยังไม่เปิดใช้งาน')),
-                        );
-                      },
-                      tooltip: "เลือกรูปจากเครื่อง",
-                    ),
+                return StudentCard(
+                  index: index,
+                  student: s,
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('ฟีเจอร์เลือกไฟล์ยังไม่เปิดใช้งาน')),
+                    );
+                  },
+                  trailing: Image.asset(
+                    'assets/galleryicon.png',
+                    width: 28,
+                    height: 28,
                   ),
                 );
               },
@@ -203,15 +219,15 @@ class _ListScreenState extends State<ListScreen> {
                 height: 60,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF29A8F3),
+                    backgroundColor: const Color(0xFF29A8F3),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
                     elevation: 2,
                   ),
                   onPressed: () {},
-                  icon: Icon(Icons.arrow_downward, color: Colors.white, size: 28),
-                  label: Text(
+                  icon: const Icon(Icons.arrow_downward, color: Colors.white, size: 28),
+                  label: const Text(
                     'DOWNLOAD',
                     style: TextStyle(
                       color: Colors.white,
@@ -226,29 +242,6 @@ class _ListScreenState extends State<ListScreen> {
           ),
         ],
       ),
-    );
-  }
-}
-
-// --- dropdown box สวย ๆ ---
-class _DropdownMenuBox extends StatelessWidget {
-  final String value;
-  final List<String> options;
-  final ValueChanged<String> onChanged;
-  const _DropdownMenuBox({required this.value, required this.options, required this.onChanged});
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.blueGrey.shade50,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
-      ),
-      icon: Icon(Icons.arrow_drop_down, color: Colors.black87),
-      items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
-      onChanged: (v) { if (v != null) onChanged(v); },
     );
   }
 }
