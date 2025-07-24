@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../list.dart';
+<<<<<<< HEAD
 import '../register_page.dart'; // เพิ่มตรงนี้
+=======
+>>>>>>> 69a2162d7d24f9100f23a6af3b36bb4fcd9a367a
 import 'login_input_field.dart';
 import 'login_button.dart';
 
@@ -95,6 +98,7 @@ class _LoginFormState extends State<LoginForm> {
               textAlign: TextAlign.center,
             ),
           ],
+<<<<<<< HEAD
           const SizedBox(height: 24),
 
           // เพิ่มปุ่มสมัครสมาชิก
@@ -126,6 +130,8 @@ class _LoginFormState extends State<LoginForm> {
               ),
             ),
           ),
+=======
+>>>>>>> 69a2162d7d24f9100f23a6af3b36bb4fcd9a367a
         ],
       ),
     );

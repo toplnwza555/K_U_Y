@@ -12,6 +12,7 @@ class AuthService {
       return e.message ?? 'เกิดข้อผิดพลาด';
     }
   }
+<<<<<<< HEAD
 
   static Future<String?> register(String email, String password) async {
     try {
@@ -28,4 +29,6 @@ class AuthService {
   static Future<void> logout() async {
     await FirebaseAuth.instance.signOut();
   }
+=======
+>>>>>>> 69a2162d7d24f9100f23a6af3b36bb4fcd9a367a
 }

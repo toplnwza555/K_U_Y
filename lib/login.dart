@@ -26,7 +26,11 @@ class LoginPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 18),
+<<<<<<< HEAD
                   const LoginForm(), // มีลิงก์สมัครสมาชิกในกล่องฟอร์มแล้ว
+=======
+                  const LoginForm(),
+>>>>>>> 69a2162d7d24f9100f23a6af3b36bb4fcd9a367a
                 ],
               ),
             ),
