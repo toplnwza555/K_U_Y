@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../list.dart';
-import '../register_page.dart'; // เพิ่มตรงนี้
+import '../register_page.dart';
+import '../ForgotPasswordPage.dart'; // เพิ่ม import หน้าลืมรหัสผ่าน
 import 'login_input_field.dart';
 import 'login_button.dart';
 
@@ -97,34 +98,40 @@ class _LoginFormState extends State<LoginForm> {
           ],
           const SizedBox(height: 24),
 
-          // เพิ่มปุ่มสมัครสมาชิก
-          TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const RegisterPage()),
-              );
-            },
-            child: RichText(
-              text: const TextSpan(
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w400,
+          // ปรับให้เป็นแถวซ้าย-ขวา
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ForgotPasswordPage()),
+                  );
+                },
+                child: const Text(
+                  'ลืมรหัสผ่าน?',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
                 ),
-                children: [
-                  TextSpan(text: 'ยังไม่มีบัญชี? '),
-                  TextSpan(
-                    text: 'สมัครสมาชิก',
-                    style: TextStyle(
-                      color: Colors.lightBlueAccent,
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ],
               ),
-            ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const RegisterPage()),
+                  );
+                },
+                child: const Text(
+                  'สมัครสมาชิก',
+                  style: TextStyle(
+                    color: Colors.lightBlueAccent,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

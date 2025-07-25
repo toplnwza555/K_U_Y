@@ -16,11 +16,9 @@ dependencies:
   google_fonts: ^6.1.0
   excel: ^2.0.4
   provider: ^6.1.1
-<<<<<<< HEAD
+  image_picker: ^1.1.2
+  permission_handler: ^11.3.0
 
-
-=======
->>>>>>> f03d09136c26372f6360dc91f06111bb9ae98ab1
 dev_dependencies:
   flutter_test:
     sdk: flutter

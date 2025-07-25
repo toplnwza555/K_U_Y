@@ -1,9 +1,11 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:excel/excel.dart' as excel;
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+
 import 'login.dart';
 import 'widgets/dropdown_box.dart';
 import 'widgets/student_card.dart';
@@ -23,6 +25,7 @@ class _ListScreenState extends State<ListScreen> {
   String query = '';
   List<Map<String, String>> students = [];
   bool loading = true;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -64,11 +67,11 @@ class _ListScreenState extends State<ListScreen> {
     if (m != null) {
       switch (m.group(1)) {
         case 'อนุบาล':
-          return 'อนุบาล${m.group(2)}';
+          return 'อนุบาล\${m.group(2)}';
         case 'ประถม':
-          return 'ป.${m.group(2)}';
+          return 'ป.\${m.group(2)}';
         case 'มัธยม':
-          return 'ม.${m.group(2)}';
+          return 'ม.\${m.group(2)}';
       }
     }
     return 'อื่นๆ';
@@ -78,6 +81,21 @@ class _ListScreenState extends State<ListScreen> {
     final reg = RegExp(r'(\d+/\d+)');
     final m = reg.firstMatch(room);
     return m?.group(1) ?? room;
+  }
+
+  Future<void> _openCamera() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      File image = File(pickedFile.path);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ถ่ายภาพสำเร็จ')),
+      );
+      // คุณสามารถอัปโหลด image ไปยัง Firebase หรือเก็บใน local ได้ที่นี่
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ไม่ได้ถ่ายภาพ')),
+      );
+    }
   }
 
   @override
@@ -211,11 +229,7 @@ class _ListScreenState extends State<ListScreen> {
                 return StudentCard(
                   index: index,
                   student: s,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('ฟีเจอร์เลือกไฟล์ยังไม่เปิดใช้งาน')),
-                    );
-                  },
+                  onTap: () => _openCamera(),
                   trailing: Image.asset(
                     'assets/galleryicon.png',
                     width: 28,
