@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'widgets/login_form.dart';
+import 'ForgotPasswordPage.dart'; // เพิ่มการ import หน้ารีเซ็ตรหัสผ่าน
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -15,6 +16,7 @@ class LoginPage extends StatelessWidget {
           Center(
             child: SingleChildScrollView(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     'EasyCrop',
@@ -26,7 +28,7 @@ class LoginPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  const LoginForm(), // มีลิงก์สมัครสมาชิกในกล่องฟอร์มแล้ว
+                  const LoginForm(), // ฟอร์มล็อกอิน (มีลิงก์ลืมรหัสผ่านอยู่ภายในแล้ว)
                 ],
               ),
             ),
