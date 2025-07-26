@@ -27,6 +27,8 @@ class _ListScreenState extends State<ListScreen> {
   bool loading = true;
   final ImagePicker _picker = ImagePicker();
 
+  Map<String, File> studentImages = {}; // <studentId, File>
+
   @override
   void initState() {
     super.initState();
@@ -67,11 +69,11 @@ class _ListScreenState extends State<ListScreen> {
     if (m != null) {
       switch (m.group(1)) {
         case 'อนุบาล':
-          return 'อนุบาล\${m.group(2)}';
+          return 'อนุบาล${m.group(2)}';
         case 'ประถม':
-          return 'ป.\${m.group(2)}';
+          return 'ป.${m.group(2)}';
         case 'มัธยม':
-          return 'ม.\${m.group(2)}';
+          return 'ม.${m.group(2)}';
       }
     }
     return 'อื่นๆ';
@@ -83,14 +85,16 @@ class _ListScreenState extends State<ListScreen> {
     return m?.group(1) ?? room;
   }
 
-  Future<void> _openCamera() async {
+  Future<void> _openCamera(String studentId) async {
     final pickedFile = await _picker.pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
       File image = File(pickedFile.path);
+      setState(() {
+        studentImages[studentId] = image;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('ถ่ายภาพสำเร็จ')),
       );
-      // คุณสามารถอัปโหลด image ไปยัง Firebase หรือเก็บใน local ได้ที่นี่
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('ไม่ได้ถ่ายภาพ')),
@@ -199,11 +203,11 @@ class _ListScreenState extends State<ListScreen> {
               children: [
                 Row(
                   children: [
-                    Expanded(child: DropdownMenuBox(value: level, options: levelOptions, onChanged: (v) => setState(() { level = v; year = 'ชั้นปี'; room = 'ห้อง'; }))),
+                    Expanded(child: DropdownMenuBox(value: level, options: levelOptions, onChanged: (v) => setState(() { level = v; year = 'ชั้นปี'; room = 'ห้อง'; })) ),
                     const SizedBox(width: 8),
-                    Expanded(child: DropdownMenuBox(value: year, options: yearOptions, onChanged: (v) => setState(() { year = v; room = 'ห้อง'; }))),
+                    Expanded(child: DropdownMenuBox(value: year, options: yearOptions, onChanged: (v) => setState(() { year = v; room = 'ห้อง'; })) ),
                     const SizedBox(width: 8),
-                    Expanded(child: DropdownMenuBox(value: room, options: roomOptions, onChanged: (v) => setState(() => room = v))),
+                    Expanded(child: DropdownMenuBox(value: room, options: roomOptions, onChanged: (v) => setState(() => room = v)) ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -226,15 +230,16 @@ class _ListScreenState extends State<ListScreen> {
               itemCount: filtered.length,
               itemBuilder: (context, index) {
                 final s = filtered[index];
+                final id = s['id']!;
                 return StudentCard(
                   index: index,
                   student: s,
-                  onTap: () => _openCamera(),
-                  trailing: Image.asset(
-                    'assets/galleryicon.png',
-                    width: 28,
-                    height: 28,
-                  ),
+                  onTap: () => _openCamera(id),
+                  trailing: studentImages[id] != null
+                      ? Image.file(studentImages[id]!, width: 28, height: 28, fit: BoxFit.cover)
+                      : Image.asset('assets/galleryicon.png', width: 28, height: 28),
+                  image: studentImages[id],
+                  isDarkMode: isDarkMode,  // ส่งข้อมูลโหมดมืด
                 );
               },
             ),
@@ -253,7 +258,9 @@ class _ListScreenState extends State<ListScreen> {
                     ),
                     elevation: 2,
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    // ปุ่มดาวน์โหลดทั้งหมด
+                  },
                   icon: const Icon(Icons.arrow_downward, color: Colors.white, size: 28),
                   label: const Text(
                     'DOWNLOAD',
