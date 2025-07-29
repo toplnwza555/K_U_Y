@@ -5,6 +5,7 @@ import 'package:excel/excel.dart' as excel;
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 
@@ -105,7 +106,8 @@ class _ListScreenState extends State<ListScreen> {
     }
   }
 
-  Future<void> _downloadAllImages() async {
+  Future<void> _downloadAllImagesToCustomFolder() async {
+    // ขอ permission storage
     final status = await _requestStoragePermission();
     if (!status) {
       if (!context.mounted) return;
@@ -115,14 +117,20 @@ class _ListScreenState extends State<ListScreen> {
       return;
     }
 
-    final dir = Directory('/storage/emulated/0/DCIM/EasyCrop');
-    if (!await dir.exists()) {
-      await dir.create(recursive: true);
+    // เลือกโฟลเดอร์
+    String? directoryPath = await FilePicker.platform.getDirectoryPath(dialogTitle: 'เลือกโฟลเดอร์ที่ต้องการบันทึก');
+    if (directoryPath == null) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ยกเลิกการเลือกโฟลเดอร์')),
+      );
+      return;
     }
 
+    // เซฟรูปเข้าโฟลเดอร์ที่เลือก
     for (var entry in studentImages.entries) {
       final fileName = '${entry.key}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final newPath = p.join(dir.path, fileName);
+      final newPath = p.join(directoryPath, fileName);
       await entry.value.copy(newPath);
     }
 
@@ -134,9 +142,9 @@ class _ListScreenState extends State<ListScreen> {
 
   Future<bool> _requestStoragePermission() async {
     if (Platform.isAndroid) {
-      if (await Permission.photos.request().isGranted) return true;
-      if (await Permission.manageExternalStorage.request().isGranted) return true;
       if (await Permission.storage.request().isGranted) return true;
+      if (await Permission.manageExternalStorage.request().isGranted) return true;
+      if (await Permission.photos.request().isGranted) return true;
     }
     return false;
   }
@@ -294,7 +302,7 @@ class _ListScreenState extends State<ListScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               elevation: 2,
             ),
-            onPressed: studentImages.isEmpty ? null : _downloadAllImages,
+            onPressed: studentImages.isEmpty ? null : _downloadAllImagesToCustomFolder,
             icon: const Icon(Icons.arrow_downward, color: Colors.white, size: 28),
             label: Text('ดาวน์โหลด (${studentImages.length})',
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 21, letterSpacing: 0.5),

@@ -12,7 +12,16 @@ pluginManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://jitpack.io") } // ✅ เพิ่มตรงนี้
         gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") } // ✅ และตรงนี้ด้วย
     }
 }
 
