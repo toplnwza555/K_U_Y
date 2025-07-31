@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:path/path.dart' as p;
 
 import 'login.dart';
@@ -14,6 +15,7 @@ import 'widgets/dropdown_box.dart';
 import 'widgets/student_card.dart';
 import 'services/theme_notifier.dart';
 import 'settings_page.dart';
+import 'package:http/http.dart' as http;
 
 class ListScreen extends StatefulWidget {
   const ListScreen({super.key});
@@ -29,7 +31,8 @@ class _ListScreenState extends State<ListScreen> {
   List<Map<String, String>> students = [];
   bool loading = true;
   final ImagePicker _picker = ImagePicker();
-  Map<String, File> studentImages = {};
+
+  Map<String, Uint8List> studentImages = {}; // เปลี่ยน File เป็น Uint8List
 
   @override
   void initState() {
@@ -89,25 +92,57 @@ class _ListScreenState extends State<ListScreen> {
 
   Future<void> _openCamera(String studentId) async {
     final pickedFile = await _picker.pickImage(source: ImageSource.camera);
-    if (pickedFile != null) {
-      File image = File(pickedFile.path);
-      setState(() {
-        studentImages[studentId] = image;
-      });
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ถ่ายภาพสำเร็จ')),
-      );
-    } else {
+    if (pickedFile == null) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('ไม่ได้ถ่ายภาพ')),
       );
+      return;
+    }
+
+    setState(() {
+      loading = true;
+    });
+
+    // เรียก API ส่งภาพไปตัด bg + เปลี่ยนพื้นหลัง
+    Uint8List? processed = await removeBgWithApi(File(pickedFile.path));
+    setState(() {
+      loading = false;
+    });
+
+    if (processed != null) {
+      setState(() {
+        studentImages[studentId] = processed;
+      });
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ตัดพื้นหลัง/ครอปสำเร็จ')),
+      );
+    } else {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('เกิดข้อผิดพลาดในการประมวลผล')),
+      );
+    }
+  }
+
+  Future<Uint8List?> removeBgWithApi(File imageFile) async {
+    // ---- ใส่ ip ของเครื่องที่รัน fastapi ----
+    const apiUrl = 'http://192.168.1.65:8000/crop-bg';
+
+    final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+    request.files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+
+    final streamed = await request.send();
+    if (streamed.statusCode == 200) {
+      return await streamed.stream.toBytes();
+    } else {
+      print('API Error: ${streamed.statusCode}');
+      return null;
     }
   }
 
   Future<void> _downloadAllImagesToCustomFolder() async {
-    // ขอ permission storage
     final status = await _requestStoragePermission();
     if (!status) {
       if (!context.mounted) return;
@@ -117,7 +152,6 @@ class _ListScreenState extends State<ListScreen> {
       return;
     }
 
-    // เลือกโฟลเดอร์
     String? directoryPath = await FilePicker.platform.getDirectoryPath(dialogTitle: 'เลือกโฟลเดอร์ที่ต้องการบันทึก');
     if (directoryPath == null) {
       if (!context.mounted) return;
@@ -127,11 +161,12 @@ class _ListScreenState extends State<ListScreen> {
       return;
     }
 
-    // เซฟรูปเข้าโฟลเดอร์ที่เลือก
+    // !! ตรงนี้ยังเป็นแบบ save file ธรรมดา ถ้าอยาก save จาก Uint8List ต้องเขียนใหม่ (แจ้งได้เลย)
+    // ตัวอย่างเก็บจาก Uint8List (studentImages) ลงไฟล์
     for (var entry in studentImages.entries) {
-      final fileName = '${entry.key}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final fileName = '${entry.key}_${DateTime.now().millisecondsSinceEpoch}.png';
       final newPath = p.join(directoryPath, fileName);
-      await entry.value.copy(newPath);
+      File(newPath).writeAsBytesSync(entry.value);
     }
 
     if (!context.mounted) return;
@@ -280,9 +315,9 @@ class _ListScreenState extends State<ListScreen> {
           student: s,
           onTap: () => _openCamera(id),
           trailing: studentImages[id] != null
-              ? Image.file(studentImages[id]!, width: 28, height: 28, fit: BoxFit.cover)
+              ? Image.memory(studentImages[id]!, width: 28, height: 28, fit: BoxFit.cover)
               : Image.asset('assets/galleryicon.png', width: 28, height: 28),
-          image: studentImages[id],
+          imageBytes: studentImages[id],
           isDarkMode: isDarkMode,
         );
       },

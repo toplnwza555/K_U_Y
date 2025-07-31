@@ -22,9 +22,10 @@ class _RemoveBgScreenState extends State<RemoveBgScreen> {
 
     setState(() {
       loading = true;
+      imageBytes = null;
     });
 
-    final bytes = await removeBackground(File(picked.path));
+    final bytes = await removeBgWithApi(File(picked.path));
 
     setState(() {
       imageBytes = bytes;
@@ -32,24 +33,23 @@ class _RemoveBgScreenState extends State<RemoveBgScreen> {
     });
   }
 
-  Future<Uint8List?> removeBackground(File imageFile) async {
-    const apiKey = 'hrvgKj5WmN37z5gGLWnkvjj';
-    // <-- ใส่ API key ของคุณจาก remove.bg
+  Future<Uint8List?> removeBgWithApi(File imageFile) async {
+    const apiUrl = 'http://192.168.1.65:8000/crop-bg';
+
 
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse('https://api.remove.bg/v1.0/removebg'),
-    )
-      ..headers['X-Api-Key'] = apiKey
-      ..files.add(await http.MultipartFile.fromPath('image_file', imageFile.path))
-      ..fields['size'] = 'auto';
+      Uri.parse(apiUrl),
+    );
+    request.files.add(await http.MultipartFile.fromPath('file', imageFile.path));
 
-    final response = await request.send();
-
-    if (response.statusCode == 200) {
-      return await response.stream.toBytes();
+    final streamed = await request.send();
+    print('API Status: ${streamed.statusCode}');
+    if (streamed.statusCode == 200) {
+      return await streamed.stream.toBytes();
     } else {
-      print('Remove.bg error: ${response.statusCode}');
+      final respStr = await streamed.stream.bytesToString();
+      print('API ErrorBody: $respStr');
       return null;
     }
   }
@@ -58,7 +58,7 @@ class _RemoveBgScreenState extends State<RemoveBgScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ตัดพื้นหลังเป็นสีฟ้า'),
+        title: const Text('ตัดพื้นหลังเป็นสีฟ้า (API Local)'),
         backgroundColor: Colors.blue.shade800,
       ),
       body: Column(
@@ -74,7 +74,7 @@ class _RemoveBgScreenState extends State<RemoveBgScreen> {
                   width: 220,
                   height: 260,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF3399FF), // พื้นหลังฟ้า
+                    color: const Color(0xFF29A8F3),
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),

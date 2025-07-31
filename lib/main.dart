@@ -6,8 +6,8 @@ import 'package:provider/provider.dart';
 import 'services/theme_notifier.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // ✅ เพิ่ม
-  await Firebase.initializeApp(                // ✅ เพิ่ม await
+  WidgetsFlutterBinding.ensureInitialized(); //
+  await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(const MyApp());

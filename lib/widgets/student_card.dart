@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
+import 'dart:typed_data';
 
 class StudentCard extends StatelessWidget {
   final int index;
   final Map<String, String> student;
   final VoidCallback onTap;
   final Widget trailing;
-  final File? image;
-  final bool isDarkMode;  // เพิ่มตัวแปรสำหรับตรวจสอบโหมดมืด
+  final Uint8List? imageBytes;
+  final bool isDarkMode;
 
   const StudentCard({
     super.key,
@@ -15,8 +15,8 @@ class StudentCard extends StatelessWidget {
     required this.student,
     required this.onTap,
     required this.trailing,
-    required this.image,
-    required this.isDarkMode,  // รับค่าการตั้งค่าโหมดมืด
+    required this.imageBytes,
+    required this.isDarkMode,
   });
 
   @override
@@ -24,7 +24,7 @@ class StudentCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isDarkMode ? Colors.black : const Color(0xFFE1F5FE), // สีดำในโหมดมืด และฟ้าอ่อนในโหมดปกติ
+        color: isDarkMode ? Colors.black : const Color(0xFFE1F5FE),
         borderRadius: BorderRadius.circular(16),
       ),
       child: ListTile(
@@ -35,8 +35,8 @@ class StudentCard extends StatelessWidget {
             CircleAvatar(
               radius: 26,
               backgroundColor: Colors.grey[300],
-              backgroundImage: image != null ? FileImage(image!) : null,
-              child: image == null
+              backgroundImage: imageBytes != null ? MemoryImage(imageBytes!) : null,
+              child: imageBytes == null
                   ? const Icon(Icons.person, size: 30, color: Colors.grey)
                   : null,
             ),
@@ -58,13 +58,13 @@ class StudentCard extends StatelessWidget {
           student['name'] ?? '',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: isDarkMode ? Colors.white : Colors.black,  // สีตัวอักษรให้ตรงกับโหมด
+            color: isDarkMode ? Colors.white : Colors.black,
           ),
         ),
         subtitle: Text(
           'รหัส: ${student['id']}, ห้อง: ${student['room']}',
           style: TextStyle(
-            color: isDarkMode ? Colors.white : Colors.black,  // สีตัวอักษรให้ตรงกับโหมด
+            color: isDarkMode ? Colors.white : Colors.black,
           ),
         ),
         trailing: GestureDetector(
@@ -75,11 +75,11 @@ class StudentCard extends StatelessWidget {
               shape: BoxShape.circle,
               color: Colors.lightBlueAccent,
             ),
-            child: image == null
+            child: imageBytes == null
                 ? const Icon(Icons.photo_camera, color: Colors.white)
                 : ClipRRect(
               borderRadius: BorderRadius.circular(20),
-              child: Image.file(image!, width: 28, height: 28, fit: BoxFit.cover),
+              child: Image.memory(imageBytes!, width: 28, height: 28, fit: BoxFit.cover),
             ),
           ),
         ),
