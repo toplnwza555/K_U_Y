@@ -1,8 +1,10 @@
 // lib/widgets/register_form.dart
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../list.dart';
+import '../login.dart'; // <- อย่าลืม import login
 
 class RegisterForm extends StatefulWidget {
   const RegisterForm({super.key});
@@ -109,14 +111,26 @@ class _RegisterFormState extends State<RegisterForm> {
               textAlign: TextAlign.center,
             ),
           ],
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // ย้อนกลับไปหน้าก่อน (LoginPage)
-            },
-            child: const Text(
-              'มีบัญชีอยู่แล้ว? เข้าสู่ระบบ',
-              style: TextStyle(color: Colors.white70, fontSize: 14),
+          const SizedBox(height: 20),
+          // ==== ย้าย RichText (เข้าสู่ระบบ) มาไว้ที่นี่ ====
+          RichText(
+            text: TextSpan(
+              text: 'มีบัญชีอยู่แล้ว? ',
+              style: const TextStyle(color: Colors.white70, fontSize: 16),
+              children: [
+                TextSpan(
+                  text: 'เข้าสู่ระบบ',
+                  style: const TextStyle(
+                    color: Colors.lightBlueAccent,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                  ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      Navigator.pop(context); // หรือจะ pushReplacement LoginPage ก็ได้
+                    },
+                ),
+              ],
             ),
           ),
         ],

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:excel/excel.dart' as excel;
 import 'package:provider/provider.dart';
@@ -29,20 +28,15 @@ class _ListScreenState extends State<ListScreen> {
   String room = 'ห้อง';
   String query = '';
   List<Map<String, String>> students = [];
-  bool loading = true;
+  bool loading = false;
   final ImagePicker _picker = ImagePicker();
+  String? excelFileName;
+  Map<String, Uint8List> studentImages = {};
 
-  Map<String, Uint8List> studentImages = {}; // เปลี่ยน File เป็น Uint8List
-
-  @override
-  void initState() {
-    super.initState();
-    loadStudentsFromExcel();
-  }
-
-  Future<void> loadStudentsFromExcel() async {
-    final data = await rootBundle.load('assets/students_by_class_fixed.xlsx');
-    final bytes = data.buffer.asUint8List();
+  Future<void> loadStudentsFromBytes(Uint8List bytes, {String? fileName}) async {
+    setState(() {
+      loading = true;
+    });
     final excelFile = excel.Excel.decodeBytes(bytes);
     final sheet = excelFile.tables[excelFile.tables.keys.first]!;
 
@@ -58,7 +52,24 @@ class _ListScreenState extends State<ListScreen> {
     setState(() {
       students = loaded;
       loading = false;
+      excelFileName = fileName;
     });
+  }
+
+  Future<void> pickExcelFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['xlsx'],
+    );
+    if (result != null) {
+      if (result.files.single.bytes != null) {
+        await loadStudentsFromBytes(result.files.single.bytes!, fileName: result.files.single.name);
+      } else if (result.files.single.path != null) {
+        final file = File(result.files.single.path!);
+        final bytes = await file.readAsBytes();
+        await loadStudentsFromBytes(bytes, fileName: result.files.single.name);
+      }
+    }
   }
 
   String extractLevel(String room) {
@@ -104,7 +115,6 @@ class _ListScreenState extends State<ListScreen> {
       loading = true;
     });
 
-    // เรียก API ส่งภาพไปตัด bg + เปลี่ยนพื้นหลัง
     Uint8List? processed = await removeBgWithApi(File(pickedFile.path));
     setState(() {
       loading = false;
@@ -127,8 +137,7 @@ class _ListScreenState extends State<ListScreen> {
   }
 
   Future<Uint8List?> removeBgWithApi(File imageFile) async {
-    // ---- ใส่ ip ของเครื่องที่รัน fastapi ----
-    const apiUrl = 'http://192.168.1.65:8000/crop-bg';
+    const apiUrl = 'http://192.168.1.89:8000/crop-bg';
 
     final request = http.MultipartRequest('POST', Uri.parse(apiUrl));
     request.files.add(await http.MultipartFile.fromPath('file', imageFile.path));
@@ -161,8 +170,6 @@ class _ListScreenState extends State<ListScreen> {
       return;
     }
 
-    // !! ตรงนี้ยังเป็นแบบ save file ธรรมดา ถ้าอยาก save จาก Uint8List ต้องเขียนใหม่ (แจ้งได้เลย)
-    // ตัวอย่างเก็บจาก Uint8List (studentImages) ลงไฟล์
     for (var entry in studentImages.entries) {
       final fileName = '${entry.key}_${DateTime.now().millisecondsSinceEpoch}.png';
       final newPath = p.join(directoryPath, fileName);
@@ -215,16 +222,105 @@ class _ListScreenState extends State<ListScreen> {
       appBar: AppBar(
         backgroundColor: isDarkMode ? Colors.grey[900] : const Color(0xFF263238),
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text('รายการนักเรียน', style: TextStyle(color: Colors.white)),
-      ),
-      body: loading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-        children: [
-          buildFilterBar(isDarkMode, textColor, levelOptions, yearOptions, roomChoices),
-          Expanded(child: buildStudentList(filtered, isDarkMode)),
-          buildDownloadButton(),
+        title: Row(
+          children: [
+            const Text('รายการนักเรียน', style: TextStyle(color: Colors.white)),
+            if (excelFileName != null) ...[
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  excelFileName!,
+                  style: const TextStyle(color: Colors.yellowAccent, fontSize: 14),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ]
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.upload_file, color: Colors.white),
+            tooltip: 'เลือกไฟล์ Excel',
+            onPressed: pickExcelFile,
+          )
         ],
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFd6f3fc), Color(0xFFb2ebf2), Color(0xFFffffff)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: students.isEmpty
+            ? Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // โลโก้หรือภาพกลาง
+                CircleAvatar(
+                  radius: 54,
+                  backgroundImage: const AssetImage('assets/mylogo.png'),
+                  backgroundColor: Colors.white,
+                ),
+                const SizedBox(height: 32),
+                // ข้อความแนะนำ
+                const Text(
+                  '🎉 ยินดีต้อนรับสู่ระบบรายชื่อนักเรียน',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF256379),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'กรุณาเลือกไฟล์ Excel รายชื่อนักเรียน\nเพื่อเริ่มต้นใช้งานระบบ',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 17,
+                    color: Color(0xFF388eaa),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // ปุ่มเลือกไฟล์
+                ElevatedButton.icon(
+                  onPressed: pickExcelFile,
+                  icon: const Icon(Icons.upload_file, size: 28),
+                  label: const Text(
+                    'เลือกไฟล์ Excel รายชื่อนักเรียน',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF29A8F3),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 60),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(38),
+                    ),
+                    elevation: 10,
+                    shadowColor: Colors.blueAccent.withOpacity(0.2),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        )
+            : (loading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+          children: [
+            buildFilterBar(isDarkMode, textColor, levelOptions, yearOptions, roomChoices),
+            Expanded(child: buildStudentList(filtered, isDarkMode)),
+            buildDownloadButton(),
+          ],
+        )),
       ),
     );
   }
