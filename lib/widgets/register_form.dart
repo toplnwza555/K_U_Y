@@ -19,6 +19,9 @@ class _RegisterFormState extends State<RegisterForm> {
   bool _isLoading = false;
   String? _error;
 
+  // ---- เพิ่มตัวแปรนี้สำหรับโชว์/ซ่อนรหัสผ่าน ----
+  bool _obscurePassword = true;
+
   Future<void> _register() async {
     setState(() {
       _error = null;
@@ -70,10 +73,11 @@ class _RegisterFormState extends State<RegisterForm> {
             ),
           ),
           const SizedBox(height: 16),
+          // ---- ช่องรหัสผ่านที่มีปุ่มโชว์/ซ่อน ----
           TextField(
             controller: _passwordController,
             style: const TextStyle(color: Colors.white),
-            obscureText: true,
+            obscureText: _obscurePassword,
             decoration: InputDecoration(
               filled: true,
               fillColor: Colors.white.withOpacity(0.10),
@@ -82,6 +86,18 @@ class _RegisterFormState extends State<RegisterForm> {
               prefixIcon: const Icon(Icons.lock, color: Colors.white70),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
+              ),
+              // เพิ่มปุ่มไอคอนตา
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.white70,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
               ),
             ),
           ),
